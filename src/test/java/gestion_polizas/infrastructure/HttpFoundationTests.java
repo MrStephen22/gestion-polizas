@@ -2,6 +2,8 @@ package gestion_polizas.infrastructure;
 
 import gestion_polizas.domain.exceptions.BusinessConflictException;
 import gestion_polizas.domain.exceptions.ResourceNotFoundException;
+import gestion_polizas.domain.exceptions.InvalidDomainDataException;
+import gestion_polizas.domain.exceptions.ConcurrentPolizaModificationException;
 import gestion_polizas.infrastructure.adapters.input.rest.responses.ApiResponse;
 import gestion_polizas.infrastructure.adapters.input.rest.responses.PageResponse;
 import jakarta.validation.Valid;
@@ -108,6 +110,18 @@ class HttpFoundationTests {
     }
 
     @Test
+    void concurrencyConflictReturns409() throws Exception {
+        error(authorized(get("/__test/probe/error/concurrent")),
+                409, "La operacion presenta un conflicto de negocio");
+    }
+
+    @Test
+    void invalidDomainDataReturns400() throws Exception {
+        error(authorized(get("/__test/probe/error/invalid")),
+                400, "Los datos de la solicitud no son validos");
+    }
+
+    @Test
     void unexpectedErrorDoesNotExposeInternalMessage() throws Exception {
         error(authorized(get("/__test/probe/error/internal")), 500, "Error interno del servidor");
     }
@@ -119,7 +133,7 @@ class HttpFoundationTests {
 
     @Test
     void swaggerPathsAreAccessibleWithoutKey() throws Exception {
-        // No springdoc dependency yet: these test-only handlers verify the allowlist.
+        // Actual Swagger UI and generated documentation are public.
         mvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
         mvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
     }
@@ -182,6 +196,8 @@ class HttpFoundationTests {
             throw switch (kind) {
                 case "missing" -> new ResourceNotFoundException("internal resource details");
                 case "conflict" -> new BusinessConflictException("internal conflict details");
+                case "concurrent" -> new ConcurrentPolizaModificationException();
+                case "invalid" -> new InvalidDomainDataException("internal validation details");
                 default -> new IllegalStateException("internal sensitive details");
             };
         }
@@ -196,9 +212,5 @@ class HttpFoundationTests {
             return ApiResponse.success("Sin datos", null);
         }
 
-        @GetMapping({"/swagger-ui/index.html", "/v3/api-docs"})
-        ApiResponse<Void> docs() {
-            return ApiResponse.success(null);
-        }
     }
 }

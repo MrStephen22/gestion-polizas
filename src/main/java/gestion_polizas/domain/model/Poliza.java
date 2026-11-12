@@ -24,6 +24,7 @@ public final class Poliza {
     private LocalDate fechaInicioVigencia;
     private LocalDate fechaFinVigencia;
     private BigDecimal canonMensual;
+    private Long revision;
 
     public Poliza(Long id, TipoPoliza tipo, LocalDate fechaInicioVigencia,
             int mesesVigenciaInicial, BigDecimal canonMensual, List<Riesgo> riesgos) {
@@ -49,6 +50,38 @@ public final class Poliza {
         this.canonMensual = canonRedondeado;
         this.riesgos = new ArrayList<>(riesgos);
         this.estado = EstadoPoliza.ACTIVA;
+    }
+
+    /** Restores persisted state, validating the same invariants without replaying operations. */
+    public static Poliza rehidratar(Long id, TipoPoliza tipo, EstadoPoliza estado,
+            LocalDate inicio, LocalDate fin, int mesesVigenciaInicial,
+            BigDecimal canonMensual, List<Riesgo> riesgos) {
+        Poliza poliza = new Poliza(id, tipo, inicio, mesesVigenciaInicial, canonMensual, riesgos);
+        if (estado == null || !poliza.fechaFinVigencia.equals(fin)) {
+            throw new InvalidDomainDataException("Estado o fechas de vigencia inconsistentes");
+        }
+        if (estado == EstadoPoliza.CANCELADA
+                && riesgos.stream().anyMatch(riesgo -> riesgo.getEstado() != EstadoRiesgo.CANCELADO)) {
+            throw new InvalidDomainDataException("Una poliza cancelada debe tener todos sus riesgos cancelados");
+        }
+        poliza.estado = estado;
+        return poliza;
+    }
+
+    /** A revision identifies the persisted snapshot, independently of any persistence framework. */
+    public static Poliza rehidratar(Long id, TipoPoliza tipo, EstadoPoliza estado,
+            LocalDate inicio, LocalDate fin, int mesesVigenciaInicial,
+            BigDecimal canonMensual, List<Riesgo> riesgos, Long revision) {
+        if (revision != null && revision < 0) {
+            throw new InvalidDomainDataException("La revision debe ser no negativa");
+        }
+        Poliza poliza = rehidratar(id, tipo, estado, inicio, fin, mesesVigenciaInicial, canonMensual, riesgos);
+        poliza.revision = revision;
+        return poliza;
+    }
+
+    public Long getRevision() {
+        return revision;
     }
 
     public void agregarRiesgo(Riesgo riesgo) {

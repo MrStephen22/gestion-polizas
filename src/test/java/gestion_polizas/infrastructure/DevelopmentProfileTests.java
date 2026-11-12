@@ -1,6 +1,7 @@
 package gestion_polizas.infrastructure;
 
 import gestion_polizas.infrastructure.config.ApiKeyProperties;
+import org.springframework.context.ApplicationContext;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,7 +15,8 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("dev")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "app.dev-data.enabled=false")
 class DevelopmentProfileTests {
     @LocalServerPort
     int port;
@@ -22,11 +24,15 @@ class DevelopmentProfileTests {
     @Autowired
     ApiKeyProperties properties;
 
+    @Autowired
+    ApplicationContext context;
+
     private final HttpClient client = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL).build();
 
     @Test
     void h2ConsoleIsAccessibleWithoutApiKeyInDevelopment() throws Exception {
+        assertThat(context.containsBean("developmentDataInitializer")).isFalse();
         var response = client.send(HttpRequest.newBuilder(
                 URI.create("http://localhost:" + port + "/h2-console/")).GET().build(),
                 HttpResponse.BodyHandlers.ofString());

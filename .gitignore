@@ -33,3 +33,47 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local configuration and secrets ###
+.env
+.env.*
+!.env.example
+!.env.sample
+.envrc
+/src/main/resources/application-local.properties
+/src/main/resources/application-local.yml
+/src/main/resources/application-local.yaml
+/config/application*.properties
+/config/application*.yml
+/config/application*.yaml
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+### Temporary files and generated artifacts ###
+/tmp/
+/temp/
+/logs/
+/out/
+/bin/
+/.m2/
+*.log
+*.log.*
+*.class
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+*.mv.db
+*.h2.db
+*.trace.db
+*.hprof
+hs_err_pid*
+replay_pid*
+.DS_Store
+Thumbs.db

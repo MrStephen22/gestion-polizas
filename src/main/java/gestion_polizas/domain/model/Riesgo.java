@@ -13,11 +13,16 @@ public final class Riesgo {
     }
 
     private Riesgo(Long id, EstadoRiesgo estado) {
-        if (id == null) {
-            throw new InvalidDomainDataException("El identificador del riesgo es obligatorio");
+        if (id == null || estado == null) {
+            throw new InvalidDomainDataException("El identificador y estado del riesgo son obligatorios");
         }
         this.id = id;
         this.estado = estado;
+    }
+
+    /** Restores a snapshot without replaying a cancellation. */
+    public static Riesgo rehidratar(Long id, EstadoRiesgo estado) {
+        return new Riesgo(id, estado);
     }
 
     Riesgo cancelar() {

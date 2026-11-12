@@ -15,8 +15,11 @@ class GestionPolizasApplicationTests {
 	void contextLoads() {
 		assertThat(context.getEnvironment().getProperty("spring.h2.console.enabled", Boolean.class)).isFalse();
 		assertThat(context.containsBean("h2Console")).isFalse();
-		assertThat(context.getBeanNamesForAnnotation(org.springframework.web.bind.annotation.RestController.class))
-				.isEmpty();
+		assertThat(context.getBeansWithAnnotation(org.springframework.web.bind.annotation.RestController.class).values())
+				.filteredOn(bean -> bean.getClass().getPackageName().startsWith("gestion_polizas"))
+				.extracting(bean -> bean.getClass().getSimpleName())
+				.containsExactlyInAnyOrder("PolizaController", "RiesgoController", "CoreMockController");
+		assertThat(context.containsBean("developmentDataInitializer")).isFalse();
 	}
 
 }

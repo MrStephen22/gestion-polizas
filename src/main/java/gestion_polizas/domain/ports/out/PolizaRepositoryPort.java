@@ -15,6 +15,13 @@ public interface PolizaRepositoryPort {
     /** Null filters mean no restriction. Results must have stable ordering by policy ID. */
     List<Poliza> listar(TipoPoliza tipo, EstadoPoliza estado);
 
-    /** Saves the policy and its risks together; the application owns the transaction boundary. */
+    /** Zero-based page index, stable ascending order by policy ID. */
+    PolizaPage listar(TipoPoliza tipo, EstadoPoliza estado, int pageIndex, int size);
+
+    /**
+     * Saves the complete aggregate and returns its new persisted revision.
+     * Callers must retain the returned snapshot for subsequent writes.
+     * A stale or missing revision on an existing aggregate is a concurrency conflict.
+     */
     Poliza guardar(Poliza poliza);
 }

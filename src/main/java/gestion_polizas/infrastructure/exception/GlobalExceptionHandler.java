@@ -2,6 +2,10 @@ package gestion_polizas.infrastructure.exception;
 
 import gestion_polizas.domain.exceptions.BusinessConflictException;
 import gestion_polizas.domain.exceptions.ResourceNotFoundException;
+import gestion_polizas.domain.exceptions.InvalidDomainDataException;
+import gestion_polizas.domain.exceptions.CoreNotificationException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import gestion_polizas.infrastructure.adapters.input.rest.responses.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -50,6 +54,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<ApiResponse<Void>> notFound(ResourceNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, "Recurso no encontrado");
+    }
+
+    @ExceptionHandler(InvalidDomainDataException.class)
+    ResponseEntity<ApiResponse<Void>> invalidDomainData(InvalidDomainDataException ex) {
+        return error(HttpStatus.BAD_REQUEST, "Los datos de la solicitud no son validos");
+    }
+
+    @ExceptionHandler({DataIntegrityViolationException.class, OptimisticLockingFailureException.class})
+    ResponseEntity<ApiResponse<Void>> persistenceConflict(Exception ex) {
+        return error(HttpStatus.CONFLICT, "La operacion presenta un conflicto de negocio");
+    }
+
+    @ExceptionHandler(CoreNotificationException.class)
+    ResponseEntity<ApiResponse<Void>> coreFailure(CoreNotificationException ex) {
+        // The adapter logs safe diagnostics. Original causes can contain external data.
+        log.error("Fallo al notificar actualizacion al CORE; respuesta HTTP 502");
+        return error(HttpStatus.BAD_GATEWAY, "No fue posible notificar al CORE");
     }
 
     @ExceptionHandler(BusinessConflictException.class)
